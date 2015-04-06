@@ -1,4 +1,4 @@
-title=Put.io for Roku
+title=phyman.io for Roku v0.1
 subtitle=This is a Roku channel for browsing your personal files on put.io
 mm_icon_focus_hd=pkg:/images/app-icon.png
 mm_icon_side_hd=pkg:/images/app-icon.png
@@ -6,5 +6,8 @@ mm_icon_focus_sd=pkg:/images/icon.png
 mm_icon_side_sd=pkg:/images/icon.png
 splash_screen_hd=pkg:/images/splash.png
 splash_screen_sd=pkg:/images/splash.png
+major_version=0
+minor_version=0
+build_version=00001
 
 

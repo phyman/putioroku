@@ -3,8 +3,13 @@ function Main()
   facade = CreateObject("roParagraphScreen")
   facade.Show()
   token = RegRead("token")
+  ' if the device isn't already linked, ask
+  ' the user to do so now
   if (token = invalid) then
     res = ShowLinkScreen(facade)
+    ' TODO: figure out how the <sub> ShowLinkScreen returns
+    ' and assigns an int to the var res (since subs are intrinsically
+    ' void return types)
     if (res = -1) then
       return -1
     end if
@@ -15,6 +20,17 @@ function Main()
   RunLandingScreen(facade)
 end function
 
+REM /*------------------------------------------------- GetLinkingCode -----
+REM |  Function GetLinkingCode
+REM |
+REM |  Purpose:
+REM |      Fetches a link code from put.io to tie the account and
+REM |      device together
+REM |
+REM |  Returns:
+REM |      The json formatted link key (code) if it exists,
+REM |      otherwise returns <invalid>
+REM *-------------------------------------------------------------------*/
 
 function GetLinkingCode() as Dynamic
   request = MakeRequest()
@@ -27,7 +43,7 @@ function GetLinkingCode() as Dynamic
     msg = wait(0, port)
     if (type(msg) = "roUrlEvent")
       code = msg.GetResponseCode()
-      if (code = 200)
+      if (code = 200) ' Successful response
         json = ParseJSON(msg.GetString())
         if (json.DoesExist("key")) then
           return json["key"]
@@ -40,6 +56,15 @@ function GetLinkingCode() as Dynamic
   return invalid
 end function
 
+REM /*------------------------------------------------- ValidateLinkingCode -----
+REM |  Function ValidateLinkingCode
+REM |
+REM |  Purpose:
+REM |      Validates the device is authorized to access the Put.io API
+REM |
+REM |  Returns:
+REM |      1 if authorization was successful
+REM *-------------------------------------------------------------------*/
 
 function ValidateLinkingCode() as Integer
   request = MakeRequest()
@@ -53,7 +78,7 @@ function ValidateLinkingCode() as Integer
     msg = wait(0, port)
     if (type(msg) = "roUrlEvent")
       code = msg.GetResponseCode()
-      if (code = 200)
+      if (code = 200) ' Successful response
         json = ParseJSON(msg.GetString())
         if (json.DoesExist("oauth_token")) then
           token = json["oauth_token"]
@@ -67,6 +92,13 @@ function ValidateLinkingCode() as Integer
   end if
 end function
 
+REM /*------------------------------------------------- ShowLinkScreen -----
+REM |  Sub Function ShowLinkScreen
+REM |
+REM |  Purpose:
+REM |      Displays the interactive Link Screen UI to allow users to pair
+REM |       their account with the device - this is normally only done once
+REM *-------------------------------------------------------------------*/
 
 sub ShowLinkScreen(facade) as Integer
   dt = CreateObject("roDateTime")
@@ -95,7 +127,7 @@ sub ShowLinkScreen(facade) as Integer
   else
     screen.SetRegistrationCode("Failed to get code...")
   end if
- 
+
   screen.Show()
   current = dt.AsSeconds()+300
 
@@ -142,7 +174,6 @@ sub ShowLinkScreen(facade) as Integer
       else if msg.isButtonPressed()
         if msg.GetIndex() = 1
           ' the user wants a new code
-          code = GetLinkingCode()
           linkingCode = GetLinkingCode()
           current = dt.AsSeconds()+300
           if linkingCode <> invalid
@@ -163,6 +194,19 @@ sub ShowLinkScreen(facade) as Integer
   screen.Close()
 end sub
 
+REM /*------------------------------------------------- RunLandingScreen -----
+REM |  Function RunLandingScreen
+REM |
+REM |  Purpose:
+REM |      First user interactive screen displaying choices:
+REM |       Files, Search and Settings
+REM |
+REM |     note: This is the first interactive screen the users sees when starting the app
+REM |
+REM |  Parameter(s):
+REM |      facade (IN)
+REM |              The screen to display while sub-screens populate
+REM *-------------------------------------------------------------------*/
 
 function RunLandingScreen(facade) as Integer
   screen = CreateObject("roListScreen")
@@ -171,20 +215,21 @@ function RunLandingScreen(facade) as Integer
 
   landing_items = CreateObject("roArray", 3, true)
   landing_items[0] = {
-                      Title: "Your Files", 
-                      HDSmallIconUrl: "pkg:/images/your-files.png", 
+                      Title: "Your Files",
+                      HDSmallIconUrl: "pkg:/images/your-files.png",
                     }
   landing_items[1] = {
-                      Title: "Search", 
-                      HDSmallIconUrl: "pkg:/images/search.png", 
+                      Title: "Search",
+                      HDSmallIconUrl: "pkg:/images/search.png",
                     }
   landing_items[2] = {
-                      Title: "Settings", 
-                      HDSmallIconUrl: "pkg:/images/settings.png", 
+                      Title: "Settings",
+                      HDSmallIconUrl: "pkg:/images/settings.png",
                     }
   screen.SetContent(landing_items)
   screen.Show()
 
+  ' wait until user makes a choice
   while (true)
       msg = wait(0, port)
       if (msg.isScreenClosed()) Then
@@ -193,9 +238,9 @@ function RunLandingScreen(facade) as Integer
       end if
       if (type(msg) = "roListScreenEvent") then
         if (msg.isListItemSelected()) then
-          if (msg.GetIndex() = 0) then
+          if (msg.GetIndex() = 0) then ' if the user selected "Your Files", generate the API call and ...
             list_root_url = "https://api.put.io/v2/files/list?start_from=1&oauth_token="+m.token
-            FileBrowser(list_root_url)
+            FileBrowser(list_root_url) ' ... open the file browser view & display its contents
           else if (msg.GetIndex() = 1) then
             Search(false)
           else if (msg.GetIndex() = 2) then
@@ -210,6 +255,15 @@ function RunLandingScreen(facade) as Integer
   end while
 end function
 
+REM /*------------------------------------------------- Settings -----
+REM |  Function Settings
+REM |
+REM |  Purpose:
+REM |      Presents the user with the various settings that may be toggled
+REM |
+REM |  Returns:
+REM |      1 if user unlinked their device, -1 on screen close
+REM *-------------------------------------------------------------------*/
 
 function Settings() as Integer
   screen = CreateObject("roListScreen")
@@ -218,18 +272,18 @@ function Settings() as Integer
 
   items = CreateObject("roArray", 3, true)
   items[0] = {
-      Title: "Unlink this device", 
-      HDSmallIconUrl: "pkg:/images/unlink.png", 
+      Title: "Unlink this device",
+      HDSmallIconUrl: "pkg:/images/unlink.png",
   }
   if (m.subtitle_on = "on")
     s_title = "Disable subtitles"
-  else 
+  else
     s_title = "Enable subtitles"
   end if
 
   items[1] = {
       Title: s_title,
-      HDSmallIconUrl: "pkg:/images/subtitles.png", 
+      HDSmallIconUrl: "pkg:/images/subtitles.png",
   }
   screen.SetContent(items)
   screen.Show()
@@ -259,15 +313,24 @@ function Settings() as Integer
   end while
 end function
 
+REM /*------------------------------------------------- InitTheme -----
+REM |  Function InitTheme
+REM |
+REM |  Purpose:
+REM |      Sets the app’s theme variables used in its UI
+REM *-------------------------------------------------------------------*/
+
 function InitTheme()
     app = CreateObject("roAppManager")
 
-    secondaryText    = "#FFED6D"
-    primaryText      = "#FFED6D"
-    buttonText       = "#C0C0C0"
-    buttonHighlight  = "#ffffff"
-    backgroundColor  = "#4D4D4D"
-    
+    secondaryText   = "#FFED6D"
+    primaryText     = "#FFED6D"
+    buttonText      = "#C0C0C0"
+    buttonHighlight = "#ffffff"
+    backgroundColor = "#4D4D4D"
+
+    ' TODO: Replace #colorValues with symbolic names
+
     theme = {
         BackgroundColor: backgroundColor
         OverhangSliceHD: "pkg:/images/roku-app-overhang.png"
@@ -307,8 +370,19 @@ function InitTheme()
     app.SetTheme( theme )
 end function
 
+REM /*------------------------------------------------- FileBrowser -----
+REM |  Function FileBrowser
+REM |
+REM |  Purpose:
+REM |      Displays the files at the target URL with context aware icons
+REM |       and handles user button presses (key) events
+REM |
+REM |  Parameter(s):
+REM |      URL (IN)
+REM |              The URL where to fetch the file listing from
+REM *-------------------------------------------------------------------*/
 
-function FileBrowser(url as string, search_history=invalid) as Integer
+function FileBrowser(url as string) as Integer
   screen = CreateObject("roListScreen")
   port = CreateObject("roMessagePort")
   screen.SetMessagePort(port)
@@ -341,7 +415,12 @@ function FileBrowser(url as string, search_history=invalid) as Integer
           focusedItem = msg.GetIndex()
       end if
 
+      REM
+      REM Button press (key) handler
+      REM
       if (msg.isRemoteKeyPressed()) then
+
+        ' INFO KEY (*) pressed
         if (msg.GetIndex() = 10) then
           content_type = files[focusedItem].ContentType
 
@@ -364,7 +443,7 @@ function FileBrowser(url as string, search_history=invalid) as Integer
               screen.SetContent(files)
             end if
           else if (c_root = "video") then
-            item = { 
+            item = {
               ContentType: "episode"
               SDPosterUrl: files[focusedItem].SDBackgroundImageUrl
               HDPosterUrl: files[focusedItem].HDBackgroundImageUrl
@@ -377,8 +456,8 @@ function FileBrowser(url as string, search_history=invalid) as Integer
               files.delete(focusedItem)
               screen.SetContent(files)
             end if
-          else
-            item = { 
+          else ' it is not a video nor a directory
+            item = {
               ContentType: "episode"
               SDPosterUrl: "pkg:/images/mid-file.png"
               ID: id
@@ -393,7 +472,7 @@ function FileBrowser(url as string, search_history=invalid) as Integer
         end if
       end if
 
-
+      ' SELECT key pressed
       if (msg.isListItemSelected()) then
         content_type = files[msg.GetIndex()].ContentType
         r = CreateObject("roRegex", "/", "")
@@ -401,10 +480,10 @@ function FileBrowser(url as string, search_history=invalid) as Integer
         c_root = parsed_ct[0]
         c_format = parsed_ct[1]
         id = files[msg.GetIndex()].ID.tostr()
-        'bir item uzerinde OK butonuna basilirsa yapiacak isler burada tanimlaniyor'
+        'OK button press in an item view
         if (content_type = "application/x-directory") then
           if (files[msg.GetIndex()].size = 0) then
-            item = { 
+            item = {
               ContentType: "episode"
               SDPosterUrl: "pkg:/images/mid-folder.png"
               ID: id
@@ -413,10 +492,11 @@ function FileBrowser(url as string, search_history=invalid) as Integer
             }
             res = SpringboardScreen(item)
             if (res = -1) then
+              ' if item was deleted from the SpringboardScreen, refresh the content listing
               files.delete(msg.GetIndex())
               screen.SetContent(files)
             end if
-          else
+          else ' construct the new dir path and recursively call FileBrowser to fetch its listing
             id = files[msg.GetIndex()].ID.tostr()
             url = "https://api.put.io/v2/files/list?oauth_token="+m.token+"&start_from=1&parent_id="+id
             FileBrowser(url)
@@ -424,7 +504,7 @@ function FileBrowser(url as string, search_history=invalid) as Integer
         else if (c_root = "video") then
           if (c_format = "mp4") then
             putio_api = "https://api.put.io/v2/files/"+id+"/stream?oauth_token="+m.token
-            item = { 
+            item = {
               ContentType: "episode"
               SDPosterUrl: files[msg.GetIndex()].SDBackgroundImageUrl
               HDPosterUrl: files[msg.GetIndex()].HDBackgroundImageUrl
@@ -441,7 +521,7 @@ function FileBrowser(url as string, search_history=invalid) as Integer
           else
             if (files[msg.GetIndex()].Mp4Available = true) then
               putio_api = "https://api.put.io/v2/files/"+id+"/mp4/stream?oauth_token="+m.token
-              item = { 
+              item = {
                 ContentType:"episode"
                 SDPosterUrl: files[msg.GetIndex()].SDBackgroundImageUrl
                 HDPosterUrl: files[msg.GetIndex()].HDBackgroundImageUrl
@@ -457,7 +537,7 @@ function FileBrowser(url as string, search_history=invalid) as Integer
               end if
             else
               putio_api = "https://api.put.io/v2/files/"+id+"/stream?oauth_token="+m.token
-              item = { 
+              item = {
                 ContentType:"episode"
                 SDPosterUrl: files[msg.GetIndex()].SDBackgroundImageUrl
                 HDPosterUrl: files[msg.GetIndex()].SDBackgroundImageUrl
@@ -475,7 +555,7 @@ function FileBrowser(url as string, search_history=invalid) as Integer
             end if
           end if
         else
-          item = { 
+          item = {
             ContentType: "episode"
             SDPosterUrl: "pkg:/images/mid-file.png"
             ID: id
@@ -487,12 +567,30 @@ function FileBrowser(url as string, search_history=invalid) as Integer
             files.delete(msg.GetIndex())
             screen.SetContent(files)
           end if
-        end if 
+        end if
       end if
     end if
   end while
 end function
 
+REM /*------------------------------------------------- GetFileList -----
+REM |  Function GetFileList
+REM |
+REM |  Purpose:
+REM |      Creates an roAssociativeArray of all files objects at the target
+REM |       URL location and populates objects meta data with screen shot
+REM |       and/or icon assets to display
+REM |
+REM |       note: ONLY used by FileBrowser
+REM |
+REM |  Parameter(s):
+REM |      URL (IN)
+REM |              Target URL to fetch file listing from
+REM |
+REM |  Returns:
+REM |      A populated roAssociativeArray with file information and
+REM |       associated meta data
+REM *-------------------------------------------------------------------*/
 
 function GetFileList(url as string) as object
   request = MakeRequest()
@@ -538,23 +636,23 @@ function GetFileList(url as string) as object
                 hd_small = "pkg:/images/playable-icon.png"
                 start_from = kind.start_from
               end if
-            endif 
+            endif
 
-            topic = {
+            item = {
               Title: kind.name,
               ID: kind.id,
               Mp4Available: kind.is_mp4_available,
               ContentType: kind.content_type,
-              SDBackgroundImageUrl: hd_screenshot, 
+              SDBackgroundImageUrl: hd_screenshot,
               HDPosterUrl: hd_screenshot,
               SDPosterUrl: sd_screenshot,
               ShortDescriptionLine1: kind.name,
-              SDSmallIconUrl: sd_small, 
-              HDSmallIconUrl: hd_small, 
+              SDSmallIconUrl: sd_small,
+              HDSmallIconUrl: hd_small,
               size: kind.size,
               StartFrom: start_from,
             }
-            files.push(topic)
+            files.push(item)
           end for
           result.files = files
           return result
@@ -567,6 +665,24 @@ function GetFileList(url as string) as object
   return invalid
 end function
 
+REM /*------------------------------------------------- SpringboardScreen -----
+REM |  Function SpringboardScreen
+REM |
+REM |  Purpose:
+REM |      The item view screen - The Springboard Screen shows detailed
+REM |       information about an individual piece of content and provides
+REM |       options for actions that may be taken on that content.
+REM |      Normal options are: Play & Delete
+REM |      Exception options: Try to Play & Convert to MP4
+REM |
+REM |  Parameter(s):
+REM |      item (IN)
+REM |              The item/object to apply selected options upon
+REM |
+REM |  Returns:
+REM |      Integer: -1 if item is deleted, otherwise 0 for a normal exit
+REM |
+REM *-------------------------------------------------------------------*/
 
 function SpringboardScreen(item as object) As Integer
     print "SpringboardScreen"
@@ -577,13 +693,14 @@ function SpringboardScreen(item as object) As Integer
     end if
 
     port = CreateObject("roMessagePort")
-    screen = CreateObject("roSpringboardScreen")    
+    screen = CreateObject("roSpringboardScreen")
     screen.SetMessagePort(port)
 
     screen.SetDescriptionStyle("video") 'audio, movie, video, generic
                                         ' generic+episode=4x3,
     screen.ClearButtons()
 
+    ' MP4 conversion and play options are offered here
     if (item.DoesExist("convert_mp4") = true) then
       request = MakeRequest()
 
@@ -595,7 +712,7 @@ function SpringboardScreen(item as object) As Integer
         msg = wait(0, port)
         if (type(msg) = "roUrlEvent") then
           code = msg.GetResponseCode()
-          if (code = 200) then
+          if (code = 200) then ' Successful response
             result = ParseJSON(msg.GetString())
             if (result["mp4"]["status"] = "NOT_AVAILABLE") then
               screen.AddButton(1, "Try to play")
@@ -606,6 +723,7 @@ function SpringboardScreen(item as object) As Integer
               screen.AddButton(1, "Try to play")
               percent_done = result["mp4"]["percent_done"]
               item.Description = "Converting to MP4...  "+percent_done.tostr()+"%"
+              'TODO: On this screen the "Try to play" button is displayed, but should it be??
             else if (result["mp4"]["status"] = "IN_QUEUE")
               screen.AddButton(1, "Try to play")
               item.Description = "In queue, please wait..."
@@ -637,7 +755,7 @@ function SpringboardScreen(item as object) As Integer
             if (code = 200) then
                 subtitles = ParseJSON(msg.GetString())
                 for each subtitle in subtitles["subtitles"]
-                  if (subtitles.default = subtitle.key) 
+                  if (subtitles.default = subtitle.key)
                     screen.AddButton(3, "Subtitles")
                   endif
                 end for
@@ -661,20 +779,18 @@ function SpringboardScreen(item as object) As Integer
       l.close()
     end if
 
-    downKey=3
-    selectKey=6
     subtitle_index = invalid
     while true
       msg = wait(0, screen.GetMessagePort())
       if type(msg) = "roSpringboardScreenEvent"
         if msg.isScreenClosed()
-          exit while                
+          exit while
         else if msg.isButtonPressed()
           if msg.GetIndex() = 1
             if subtitle_index = invalid
               subtitle = subtitles.default
             else if subtitle_index = 0
-              'Ayni scopeda degismis olabilir bu degisken. o yuzden tekrar ediyoruz' 
+              'Ayni scopeda degismis olabilir bu degisken. o yuzden tekrar ediyoruz'
               subtitle = invalid
             else
               subtitle = subtitles["subtitles"][subtitle_index-1]["key"]
@@ -691,7 +807,7 @@ function SpringboardScreen(item as object) As Integer
               subtitle_index = tmp
             end if
           else if msg.GetIndex() = 4
-            res = DeleteItem(item)  
+            res = DeleteItem(item)
             if (res = true) then
               return -1
             end if
@@ -700,6 +816,20 @@ function SpringboardScreen(item as object) As Integer
       endif
     end while
 end function
+
+REM /*------------------------------------------------- DisplayVideo -----
+REM |  Function DisplayVideo
+REM |
+REM |  Purpose:
+REM |      Play the selected video
+REM |
+REM |  Parameter(s):
+REM |      args (IN)
+REM |              Video items args such as Title, ImageUrl, ID, playhead index (StartFrom)
+REM |
+REM |      subtitle (IN)
+REM |              Selected subtitle option
+REM *-------------------------------------------------------------------*/
 
 function DisplayVideo(args as object, subtitle)
     print "Displaying video: "
@@ -776,6 +906,19 @@ function DisplayVideo(args as object, subtitle)
     end while
 end function
 
+REM /*------------------------------------------------- ResolveRedirect -----
+REM |  Function ResolveRedirect
+REM |
+REM |  Purpose:
+REM |      Fetches a redirect URL from the API if it is present
+REM |
+REM |  Parameter(s):
+REM |      str (IN)
+REM |              The constructed API URL to call
+REM |
+REM |  Returns:
+REM |      A redirect URL as a string if the API provides one, otherwise just returns str back
+REM *-------------------------------------------------------------------*/
 
 function ResolveRedirect(str As String) As String
     http = MakeRequest()
@@ -784,13 +927,23 @@ function ResolveRedirect(str As String) As String
     headers = event.GetResponseHeaders()
     redirect = headers.location
     if ( redirect <> invalid AND redirect <> str )
-      str = redirect                
+      str = redirect
     endif
     'r = CreateObject("roRegex", "https://", "")'
     'str = r.ReplaceAll(str, "http://")'
     return str
 end function
 
+REM /*------------------------------------------------- ConvertToMp4 -----
+REM |  Function ConvertToMp4
+REM |
+REM |  Purpose:
+REM |      Starts the MP4 conversion to the target item as an asynchronous process
+REM |
+REM |  Parameter(s):
+REM |      item (IN)
+REM |              Target item to convert to MP4
+REM *-------------------------------------------------------------------*/
 
 function ConvertToMp4(item as Object) as void
   request = MakeRequest()
@@ -810,6 +963,19 @@ function ConvertToMp4(item as Object) as void
   endif
 end function
 
+REM /*------------------------------------------------- Search -----
+REM |  Function Search
+REM |
+REM |  Purpose:
+REM |      Allows the user to search within their file set and displays results on screen
+REM |
+REM |  Parameter(s):
+REM |      history (OUT)
+REM |              a roArray that gets past to the FileBrowser call in order to display results
+REM |
+REM |  Returns:
+REM |      Integer - but value isn’t used anywhere
+REM *-------------------------------------------------------------------*/
 
 function Search(history) as Integer
     displayHistory = true
@@ -819,15 +985,15 @@ function Search(history) as Integer
     screen = CreateObject("roSearchScreen")
     port = CreateObject("roMessagePort")
     screen.SetBreadcrumbText("", "Search in your files")
-    screen.SetMessagePort(port) 
+    screen.SetMessagePort(port)
     if displayHistory
         screen.SetSearchTermHeaderText("Recent Searches:")
         screen.SetSearchButtonText("Search")
         screen.SetClearButtonText("Clear history")
         screen.SetClearButtonEnabled(true) 'defaults to true'
         screen.SetSearchTerms(history)
-    endif 
-    screen.Show() 
+    endif
+    screen.Show()
     while true
         msg = wait(0, screen.GetMessagePort())
         if type(msg) = "roSearchScreenEvent"
@@ -849,9 +1015,22 @@ function Search(history) as Integer
               FileBrowser(url, history)
           endif
         endif
-    end while 
+    end while
 end function
- 
+
+REM /*------------------------------------------------- DeleteItem -----
+REM |  Function DeleteItem
+REM |
+REM |  Purpose:
+REM |      Deletes the target item from account with an asynchronous request
+REM |
+REM |  Parameter(s):
+REM |      item (IN)
+REM |              The target item to delete
+REM |
+REM |  Returns:
+REM |      True if item is succcessfully deleted, false otherwise
+REM *-------------------------------------------------------------------*/
 
 function DeleteItem(item as object) as Boolean
   l = Loading()
@@ -871,45 +1050,65 @@ function DeleteItem(item as object) as Boolean
         return true
       endif
     else if (event = invalid)
-      request.AsyncCancel() 
+      request.AsyncCancel()
       l.close()
       return false
     endif
   endif
-end function
+end function ' DeleteItem
 
+REM /*------------------------------------------------- Loading -----
+REM |  Function Loading
+REM |
+REM |  Purpose:
+REM |      Displays loading splash screen and “Thinking…” text
+REM |
+REM |  Returns:
+REM |      roImageCanvas object to display
+REM *-------------------------------------------------------------------*/
 
 Sub Loading() as Object
   canvasItems = [
-        { 
+        {
             url:"pkg:/images/app-icon.png"
             TargetRect:{x:500,y:240,w:290,h:218}
         },
-        { 
+        {
             Text:"Thinking..."
             TextAttrs:{Color:"#FFED6D", Font:"Medium",
             HAlign:"HCenter", VAlign:"VCenter",
             Direction:"LeftToRight"}
             TargetRect:{x:390,y:467,w:500,h:60}
         }
-  ] 
- 
+  ]
+
   canvas = CreateObject("roImageCanvas")
   port = CreateObject("roMessagePort")
   canvas.SetMessagePort(port)
   'Set opaque background'
-  canvas.SetLayer(0, {Color:"#4D4D4D", CompositionMode:"Source"}) 
+  canvas.SetLayer(0, {Color:"#4D4D4D", CompositionMode:"Source"})
   canvas.SetRequireAllImagesToDraw(true)
   canvas.SetLayer(1, canvasItems)
   canvas.Show()
   return canvas
 end Sub
 
- 
+REM /*------------------------------------------------- CheckSubtitle -----
+REM |  Function CheckSubtitle
+REM |
+REM |  Purpose:
+REM |      UNUSED - Appears to check if the subtitle file can be found &
+REM |       is non-zero in size
+REM |
+REM |  Returns:
+REM |      a json formatted lang(uage) setting if found & valid,
+REM |       “invalid” otherwise
+REM *-------------------------------------------------------------------*/
+
 function CheckSubtitle()
   l = Loading()
   request = MakeRequest()
-  
+
   url = "https://api.put.io/v2/account/settings?oauth_token="+m.token
   port = CreateObject("roMessagePort")
   request.SetMessagePort(port)
@@ -936,7 +1135,23 @@ function CheckSubtitle()
   return invalid
 end function
 
-
+REM /*------------------------------------------------- RegRead -----
+REM |  Function RegRead
+REM |
+REM |  Purpose:
+REM |      Locates and returns the value of the registry key if found
+REM |
+REM |  Parameter(s):
+REM |      key (IN)
+REM |              The key to locate and read
+REM |
+REM |      section (IN)
+REM |              The section of the registry where the key should be found;
+REM |               default value is ‘invalid' if not provided
+REM |
+REM |  Returns:
+REM |      The key's value if found; invalid otherwise.
+REM *-------------------------------------------------------------------*/
 
 function RegRead(key, section=invalid)
     if section = invalid then section = "Default"
@@ -945,6 +1160,24 @@ function RegRead(key, section=invalid)
     return invalid
 end function
 
+REM /*------------------------------------------------- RegWrite -----
+REM |  Function RegWrite
+REM |
+REM |  Purpose:
+REM |      Locates and write val(ue) to the registry key if found
+REM |
+REM |  Parameter(s):
+REM |      key (IN)
+REM |              The key to locate and write the val(ue) into
+REM |
+REM |      val (IN)
+REM |               The val(ue) to write to the registry's key
+REM |
+REM |      section (IN)
+REM |              The section of the registry where the key should be found;
+REM |               default value is ‘invalid' if not provided
+REM |
+REM *-------------------------------------------------------------------*/
 
 function RegWrite(key, val, section=invalid)
     if section = invalid then section = "Default"
@@ -953,14 +1186,42 @@ function RegWrite(key, val, section=invalid)
     sec.Flush() 'commit it'
 end function
 
+REM /*------------------------------------------------- RegDelete -----
+REM |  Function RegDelete
+REM |
+REM |  Purpose:
+REM |      Deletes the targeted registry key.
+REM |
+REM |  Parameter(s):
+REM |      key (IN)
+REM |              The target registry key to delete
+REM |
+REM |      If the section is invalid, it creates it, then deletes the key
+REM |       BUT, there doesn’t seem to be any reason to do this...
+REM |       QED this should be changed to just return if the section is invalid
+REM |       to begin with...
+REM |
+REM *-------------------------------------------------------------------*/
 
 function RegDelete(key, section=invalid)
+    ' TODO check and see if this can't just return if section is invalid coming in
     if section = invalid then section = "Default"
     sec = CreateObject("roRegistrySection", section)
     sec.Delete(key)
     sec.Flush()
 end function
 
+REM /*------------------------------------------------- MakeRequest -----
+REM |  Function MakeRequest
+REM |
+REM |  Purpose:
+REM |      Creates and populates a URL Transfer object with Cert file name
+REM |      and adds header info needed for authentication purposes.
+REM |
+REM |  Returns:
+REM |      URL Transfer object which, after authentication, allows
+REM |     reading & writing to the target web server.
+REM *-------------------------------------------------------------------*/
 
 function MakeRequest() as Object
   request = CreateObject("roUrlTransfer")
@@ -971,17 +1232,39 @@ function MakeRequest() as Object
   return request
 end function
 
+REM /*------------------------------------------------- GetDeviceESN -----
+REM |  Function GetDeviceESN
+REM |
+REM |  Purpose:
+REM |      Reads & returns the serial number of the target device
+REM |
+REM |  Returns:
+REM |      Returns the serial number of the target device as a string
+REM *-------------------------------------------------------------------*/
 
 function GetDeviceESN()
     return CreateObject("roDeviceInfo").GetDeviceUniqueId()
 end function
 
+REM /*------------------------------------------------- DeleteScreen -----
+REM |  Function DeleteScreen
+REM |
+REM |  Purpose:
+REM |      Displays a screen with only a Delete option present
+REM |
+REM |  Parameter(s):
+REM |      item (IN)
+REM |              The target item to delete
+REM |
+REM |  Returns:
+REM |      -1 if item was successfully deleted
+REM *-------------------------------------------------------------------*/
 
 function DeleteScreen(item as object) As Integer
     port = CreateObject("roMessagePort")
-    screen = CreateObject("roSpringboardScreen")    
+    screen = CreateObject("roSpringboardScreen")
     screen.SetMessagePort(port)
-    screen.SetDescriptionStyle("video") 
+    screen.SetDescriptionStyle("video")
     screen.ClearButtons()
     screen.AddButton(1, "Delete")
     screen.SetStaticRatingEnabled(false)
@@ -995,10 +1278,10 @@ function DeleteScreen(item as object) As Integer
       msg = wait(0, screen.GetMessagePort())
       if type(msg) = "roSpringboardScreenEvent"
         if msg.isScreenClosed()
-          exit while                
+          exit while
         else if msg.isButtonPressed()
           if msg.GetIndex() = 1
-            res = DeleteItem(item)  
+            res = DeleteItem(item)
             if (res = true) then
               return -1
             end if
@@ -1008,12 +1291,29 @@ function DeleteScreen(item as object) As Integer
     end while
 end function
 
+REM  /*------------------------------------------------- SelectSubtitle -----
+REM  |  Function SelectSubtitle
+REM  |
+REM  |  Purpose:
+REM  |      Presents the user with a screen allowing users to select which
+REM  |       subtitle source to use, or not load any subtitles
+REM  |
+REM  |  Parameter(s):
+REM  |      subtitles (IN)
+REM  |              An array of subtitle items(?)
+REM  |
+REM  |      screenshot (IN)
+REM  |              A screenshot to display adjacent to the subtitle listings
+REM  |
+REM  |  Returns:
+REM  |      subtitle_index that was selected by the user; 0 is don’t load any subtitles
+REM  *-------------------------------------------------------------------*/
 
 function SelectSubtitle(subtitles as object, screenshot)
     port = CreateObject("roMessagePort")
-    screen = CreateObject("roSpringboardScreen")    
+    screen = CreateObject("roSpringboardScreen")
     screen.SetMessagePort(port)
-    screen.SetDescriptionStyle("video") 
+    screen.SetDescriptionStyle("video")
     screen.ClearButtons()
     screen.AddButton(0, "Don't load any subtitles")
     counter = 1
@@ -1022,12 +1322,12 @@ function SelectSubtitle(subtitles as object, screenshot)
     for each subtitle in subtitles["subtitles"]
       if subtitle.language <> invalid
         if subtitle.language <> language and lang_num <> 1
-          lang_num = 1
-	end if
+          lang_num = 1 ' TODO this looks like a bug forcing all languages to English...
+        end if
         language = subtitle.language
       	screen.AddButton(counter, language + " "+lang_num.tostr())
-      else 
-	screen.AddButton(counter, "Unknown language")
+      else
+	     screen.AddButton(counter, "Unknown language")
       end if
       counter = counter + 1
       lang_num = lang_num + 1
@@ -1049,7 +1349,7 @@ function SelectSubtitle(subtitles as object, screenshot)
       msg = wait(0, screen.GetMessagePort())
       if type(msg) = "roSpringboardScreenEvent"
         if msg.isScreenClosed()
-          exit while                
+          exit while
         else if msg.isButtonPressed()
           subtitle_index = msg.GetIndex()
           return subtitle_index
@@ -1058,6 +1358,21 @@ function SelectSubtitle(subtitles as object, screenshot)
     end while
 
 end function
+
+REM /*------------------------------------------------- GetStartFrom -----
+REM |  Function GetStartFrom
+REM |
+REM |  Purpose:
+REM |      Gets the starting position in ms for the selected video file
+REM |       if it was saved from the last playback
+REM |
+REM |  Parameter(s):
+REM |      args (IN)
+REM |              The playback object
+REM |
+REM |  Returns:
+REM |      ms in time (int) to seek into playback to resume playing
+REM *-------------------------------------------------------------------*/
 
 function GetStartFrom(args as object)
     if m.current_id <> invalid and args["ID"].toint() <> m.current_id
@@ -1075,7 +1390,7 @@ function GetStartFrom(args as object)
       end if
     else if args["StartFrom"] = 0 and m.start_from <> invalid
         return m.start_from
-    else 
+    else
         return 0
     end if
 end function
