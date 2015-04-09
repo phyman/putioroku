@@ -47,7 +47,7 @@ function Search(history) as Integer
               ut = CreateObject("roUrlTransfer")
               query = ut.Escape(msg.GetMessage())
               url ="https://api.put.io/v2/files/search/"+query+"?start_from=1&oauth_token="+m.token
-              FileBrowser(url, history)
+              FileBrowser(url)
           endif
         endif
     end while
