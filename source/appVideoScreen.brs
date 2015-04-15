@@ -5,43 +5,52 @@ REM |  Purpose:
 REM |      Play the selected video
 REM |
 REM |  Parameter(s):
-REM |      args (IN)
-REM |              Video items args such as Title, ImageUrl, ID, playhead index (StartFrom)
+REM |      item (IN)
+REM |              Video items item such as Title, ImageUrl, ID, playhead index (StartFrom)
 REM |
 REM |      subtitle (IN)
 REM |              Selected subtitle option
 REM *-------------------------------------------------------------------*/
 
-function DisplayVideo(args as object, subtitle)
-    print "Displaying video: "
+Function DisplayVideo(item as object, subtitle, do_restart = false)
+
+    ' response codes
+    PRECONDITION_FAILED   = 412
+
     p = CreateObject("roMessagePort")
     video = CreateObject("roVideoScreen")
     video.setMessagePort(p)
-    bitrates  = [0]
-    qualities = ["HD"]
-    StreamFormat = "mp4"
-    title = args["title"]
+    bitrates      = [0]
+    qualities     = ["HD"]
+    StreamFormat  = "mp4"
+    title         = item["title"]
+    urls          = [item["url"]]
 
-    urls = [args["url"]]
-    if type(args["url"]) = "roString" and args["url"] <> "" then
-        urls[0] = args["url"]
+    print "Displaying video: " title
+
+    if type(item["url"]) = "roString" and item["url"] <> "" then
+        urls[0] = item["url"]
     end if
-    if type(args["StreamFormat"]) = "roString" and args["StreamFormat"] <> "" then
-        StreamFormat = args["StreamFormat"]
+    if type(item["StreamFormat"]) = "roString" and item["StreamFormat"] <> "" then
+        StreamFormat = item["StreamFormat"]
     end if
-    videoclip = CreateObject("roAssociativeArray")
-    videoclip.StreamBitrates = bitrates
-    videoclip.StreamUrls = urls
+    videoclip                 = CreateObject("roAssociativeArray")
+    videoclip.StreamBitrates  = bitrates
+    videoclip.StreamUrls      = urls
     videoclip.StreamQualities = qualities
-    videoclip.StreamFormat = StreamFormat
-    videoclip.Title = title
+    videoclip.StreamFormat    = StreamFormat
+    videoclip.Title           = title
     if (m.subtitle_on = "on")
       if subtitle <> invalid
-        videoclip.SubtitleUrl = "https://api.put.io/v2/files/"+args["ID"]+"/subtitles/"+subtitle+"?oauth_token="+m.token
+        videoclip.SubtitleUrl = "https://api.put.io/v2/files/"+item["ID"]+"/subtitles/"+subtitle+"?oauth_token="+m.token
       end if
     end if
 
-    videoclip.PlayStart = GetStartFrom(args)
+    if (do_restart)
+      videoclip.PlayStart = 0
+    else
+      videoclip.PlayStart = GetStartFrom(item)
+    end if
 
     video.SetCertificatesFile("common:/certs/ca-bundle.crt")
     video.AddHeader("X-Roku-Reserved-Dev-Id", "")
@@ -53,6 +62,7 @@ function DisplayVideo(args as object, subtitle)
     video.ShowSubtitle(true)
     video.SetPositionNotificationPeriod(30)
     startFromDisabled = false
+
     while true
       msg = wait(0, video.GetMessagePort())
       if type(msg) = "roVideoScreenEvent"
@@ -62,17 +72,18 @@ function DisplayVideo(args as object, subtitle)
           else if (msg.isPlaybackPosition() and startFromDisabled = false) then
               currentpos = msg.GetIndex()
               m.start_from = currentpos
-              m.current_id = args["ID"].toint()
-              if currentpos <> 0
+              m.current_id = item["ID"].toint()
+              if (currentpos <> 0)
                 request = MakeRequest()
-                url = "https://api.put.io/v2/files/"+args["ID"]+"/start-from/set?oauth_token="+m.token
+                url = "https://api.put.io/v2/files/"+item["ID"]+"/start-from/set?oauth_token="+m.token
                 port = CreateObject("roMessagePort")
                 request.SetMessagePort(port)
                 request.SetUrl(url)
                 if (request.AsyncPostFromString("time="+currentpos.tostr()))
                   event = wait(0, port)
                   code = event.GetResponseCode()
-                  if (code = 412)
+                  ? "VideoScreen response code " code
+                  if (code = PRECONDITION_FAILED)
                     startFromDisabled = true
                   end if
                   if (event = invalid)
@@ -85,4 +96,4 @@ function DisplayVideo(args as object, subtitle)
           endif
       end if
     end while
-end function
+end Function
