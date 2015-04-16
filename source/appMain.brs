@@ -1,5 +1,6 @@
 function Main()
   InitTheme()
+  m.g = Init_Const_Globals()
   facade = CreateObject("roParagraphScreen")
   facade.Show()
   token = RegRead("token")
@@ -19,6 +20,39 @@ function Main()
   m.subtitle_on = RegRead("subtitle_on")
   RunLandingScreen(facade)
 end function
+
+' /*------------------------------------------------- Function Name -----
+' |  Function Function Name
+' |
+' |  Purpose:
+' |      Explain what this does for the program, and how it does it
+' |
+' |  Returns:
+' |      if this function sends back a value via the return
+' |      mechanism, describe the purpose of that value here
+' *-------------------------------------------------------------------*/
+
+Function Init_Const_Globals() As Object
+    print "100 - Begin - Init_Const_Static_Globals"
+
+    o = CreateObject("roAssociativeArray")
+    o.state = {
+      WAITING_FOR_USER_INPUT: true
+    }
+    o.btn_label = {
+      PLAY:         1
+      RESTART:      2
+      TRY_TO_PLAY:  3
+      DELETE:       4
+    }
+    o.response_code = {
+      SUCCESS: 200
+    }
+
+    print "200 - End - Init_Const_Static_Globals"
+    return o
+End Function
+
 
 REM /*------------------------------------------------- InitTheme -----
 REM |  Function InitTheme
@@ -76,3 +110,4 @@ function InitTheme()
     }
     app.SetTheme( theme )
 end function
+

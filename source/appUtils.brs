@@ -66,99 +66,6 @@ function DeleteItem(item as object) as Boolean
   endif
 end function
 
-
-REM /*------------------------------------------------- GetFileList -----
-REM |  Function GetFileList
-REM |
-REM |  Purpose:
-REM |      Creates an roAssociativeArray of all files objects at the target
-REM |       URL location and populates objects meta data with screen shot
-REM |       and/or icon assets to display
-REM |
-REM |       note: ONLY used by FileBrowser
-REM |
-REM |  Parameter(s):
-REM |      URL (IN)
-REM |              Target URL to fetch file listing from
-REM |
-REM |  Returns:
-REM |      A populated roAssociativeArray with file information and
-REM |       associated meta data
-REM *-------------------------------------------------------------------*/
-
-function GetFileList(url as string) as object
-  request = MakeRequest()
-
-  port = CreateObject("roMessagePort")
-  request.SetMessagePort(port)
-  request.setUrl(url)
-  result = CreateObject("roAssociativeArray")
-
-  if (request.AsyncGetToString())
-    while (true)
-      msg = wait(0, port)
-      if (type(msg) = "roUrlEvent")
-        code = msg.GetResponseCode()
-        if (code = 200)
-          files = CreateObject("roArray", 10, true)
-          json = ParseJSON(msg.GetString())
-          if (json.DoesExist("parent")) then
-            result.parent = {name: json["parent"].name, parent_id: json["parent"].parent_id}
-          end if
-          start_from = invalid
-          for each kind in json["files"]
-            if (kind.content_type = "application/x-directory") then
-              hd_screenshot = "pkg:/images/mid-folder.png"
-              sd_screenshot = "pkg:/images/mid-folder.png"
-              sd_small = "pkg:/images/small-folder.png"
-              hd_small = "pkg:/images/small-folder.png"
-            else
-              r = CreateObject("roRegex", "/", "")
-              parsed_ct = r.Split(kind.content_type)
-              c_root = parsed_ct[0]
-              if (c_root <> "video") then
-                sd_screenshot = "pkg:/images/mid-file.png"
-                hd_screenshot = "pkg:/images/mid-file.png"
-                sd_small = "pkg:/images/file-icon.png"
-                hd_small = "pkg:/images/file-icon.png"
-              else
-                r = CreateObject("roRegex", "https://", "")
-                ss = r.ReplaceAll(kind.screenshot, "http://")
-                sd_screenshot = ss
-                hd_screenshot = ss
-                sd_small = "pkg:/images/playable-icon.png"
-                hd_small = "pkg:/images/playable-icon.png"
-                start_from = kind.start_from
-              end if
-            endif
-
-            item = {
-              Title: kind.name,
-              ID: kind.id,
-              Mp4Available: kind.is_mp4_available,
-              ContentType: kind.content_type,
-              SDBackgroundImageUrl: hd_screenshot,
-              HDPosterUrl: hd_screenshot,
-              SDPosterUrl: sd_screenshot,
-              ShortDescriptionLine1: kind.name,
-              SDSmallIconUrl: sd_small,
-              HDSmallIconUrl: hd_small,
-              size: kind.size,
-              StartFrom: start_from,
-            }
-            files.push(item)
-          end for
-          result.files = files
-          return result
-        endif
-      else if (event = invalid)
-        request.AsyncCancel()
-      endif
-    end while
-  endif
-  return invalid
-end function
-
 REM /*------------------------------------------------- GetStartFrom -----
 REM |  Function GetStartFrom
 REM |
@@ -175,20 +82,21 @@ REM |      ms in time (int) to seek into playback to resume playing
 REM *-------------------------------------------------------------------*/
 
 function GetStartFrom(args as object)
-    if m.current_id <> invalid and args["ID"].toint() <> m.current_id
+    print "--- GetStartFrom::Current Id: "m.current_id
+    if (m.current_id <> invalid and args["ID"].toint() <> m.current_id)
       m.start_from = invalid
     end if
-    if args.DoesExist("StartFrom") = false
+    if (args.DoesExist("StartFrom") = false)
       return 0
     end if
 
-    if args["StartFrom"] <> 0
+    if (args["StartFrom"] <> 0)
       if m.start_from = invalid
         return args["StartFrom"]
       else
         return m.start_from
       end if
-    else if args["StartFrom"] = 0 and m.start_from <> invalid
+    else if (args["StartFrom"] = 0 and m.start_from <> invalid)
         return m.start_from
     else
         return 0
