@@ -25,3 +25,6 @@ activate_env
 /web_uploads
 .vagrant
 build/
+/out
+.buildpath
+~*.*
