@@ -18,8 +18,20 @@ function Main()
     m.token = token
   end if
   m.subtitle_on = RegRead("subtitle_on")
-  RunLandingScreen(facade)
+  ' print "----==== Main subtitle setting is " m.subtitle_on
+  initLandingScreen(facade)
 end function
+
+
+' Function Init_State_Vars() As Object
+'     print "100 - Begin - Init_State_Vars"
+
+'     o = CreateObject("roAssociativeArray")
+'     o.WAITING_FOR_USER_INPUT = true
+
+'     return o
+
+' end Function
 
 ' /*------------------------------------------------- Function Name -----
 ' |  Function Function Name
