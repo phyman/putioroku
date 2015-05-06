@@ -17,8 +17,8 @@ function Search(history) as Integer
     if (type(history) <> "roArray") then
       history = CreateObject("roArray", 1, true)
     end if
-    screen = CreateObject("roSearchScreen")
-    port = CreateObject("roMessagePort")
+    screen  = CreateObject("roSearchScreen")
+    port    = CreateObject("roMessagePort")
     screen.SetBreadcrumbText("", "Search in your files")
     screen.SetMessagePort(port)
     if displayHistory
@@ -42,7 +42,7 @@ function Search(history) as Integer
               print "full search: "; msg.GetMessage()
               history.Push(msg.GetMessage())
               if displayHistory
-                  screen.AddSearchTerm(msg.GetMessage())
+                screen.AddSearchTerm(msg.GetMessage())
               end if
               ut = CreateObject("roUrlTransfer")
               query = ut.Escape(msg.GetMessage())

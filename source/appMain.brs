@@ -4,13 +4,9 @@ function Main()
   facade = CreateObject("roParagraphScreen")
   facade.Show()
   token = RegRead("token")
-  ' if the device isn't already linked, ask
-  ' the user to do so now
+  ' if the device isn't already linked, ask the user to do so now
   if (token = invalid) then
     res = ShowLinkScreen(facade)
-    ' TODO: figure out how the <sub> ShowLinkScreen returns
-    ' and assigns an int to the var res (since subs are intrinsically
-    ' void return types)
     if (res = -1) then
       return -1
     end if
@@ -30,7 +26,7 @@ REM |      Reads and sets the user's permissions
 REM *-------------------------------------------------------------------*/
 
 Function initPermissions()
-  print " -- initPermissions --"
+  'print " -- initPermissions --"
   
   ' Users' content delete permission
   rkey    = RegRead("delete_allowed", "Permissions")
@@ -44,16 +40,6 @@ Function initPermissions()
     
 End Function
 
-
-' Function Init_State_Vars() As Object
-'     print "100 - Begin - Init_State_Vars"
-
-'     o = CreateObject("roAssociativeArray")
-'     o.WAITING_FOR_USER_INPUT = true
-
-'     return o
-
-' end Function
 
 ' /*------------------------------------------------- Function Name -----
 ' |  Function Function Name
@@ -72,12 +58,6 @@ Function Init_Const_Globals() As Object
     o = CreateObject("roAssociativeArray")
     o.state = {
       WAITING_FOR_USER_INPUT: true
-    }
-    o.btn_label = {
-      PLAY:         1
-      RESTART:      2
-      TRY_TO_PLAY:  3
-      DELETE:       4
     }
     o.response_code = {
       SUCCESS: 200

@@ -49,7 +49,7 @@ function FileBrowser(url as string) as Integer
 
         ' INFO KEY (*) pressed
         if (msg.GetIndex() = 10 and m.delete_allowed <> "false") then
-          print "=== Info key press ==="
+          'print "=== Info key press ==="
           content_type = files[focusedItem].ContentType
 
           r = CreateObject("roRegex", "/", "")
@@ -65,7 +65,6 @@ function FileBrowser(url as string) as Integer
               ID:           id
               title:        files[focusedItem].Title
             }
-            'res = DeleteScreen(item)
             if (DeleteScreen(item) = -1) then
               files.delete(focusedItem)
               screen.SetContent(files)
@@ -79,7 +78,6 @@ function FileBrowser(url as string) as Integer
               title:        files[focusedItem].Title
               StartFrom:    files[focusedItem].StartFrom
             }
-            ' res = DeleteScreen(item)
             if (DeleteScreen(item) = -1) then
               files.delete(focusedItem)
               screen.SetContent(files)
@@ -91,7 +89,6 @@ function FileBrowser(url as string) as Integer
               ID:          id
               title:       files[focusedItem].Title
             }
-            ' res = DeleteScreen(item)
             if (DeleteScreen(item) = -1) then
               files.delete(focusedItem)
               screen.SetContent(files)
@@ -118,7 +115,6 @@ function FileBrowser(url as string) as Integer
               title:        files[msg.GetIndex()].Title
               NonVideo:     true
             }
-            ' res = SpringboardScreen(item)
             if (SpringboardScreen(item) = -1) then
               ' if item was deleted from the SpringboardScreen, refresh the content listing
               files.delete(msg.GetIndex())
@@ -143,7 +139,6 @@ function FileBrowser(url as string) as Integer
               url:          putio_api
               StartFrom:    files[focusedItem].StartFrom
              }
-            ' res = SpringboardScreen(item)
             if (SpringboardScreen(item) = -1) then
               files.delete(msg.GetIndex())
               screen.SetContent(files)
@@ -160,7 +155,6 @@ function FileBrowser(url as string) as Integer
                 url:          putio_api
                 StartFrom:    files[focusedItem].StartFrom
                }
-              ' res = SpringboardScreen(item)
               if (SpringboardScreen(item) = -1) then
                 files.delete(msg.GetIndex())
                 screen.SetContent(files)
@@ -177,7 +171,6 @@ function FileBrowser(url as string) as Integer
                 url:          putio_api
                 StartFrom:    files[focusedItem].StartFrom
               }
-              ' res = SpringboardScreen(item)
               if (SpringboardScreen(item) = -1) then
                 files.delete(msg.GetIndex())
                 screen.SetContent(files)
@@ -192,7 +185,6 @@ function FileBrowser(url as string) as Integer
             title:        files[msg.GetIndex()].Title
             NonVideo:     true
           }
-          ' res = SpringboardScreen(item)
           if (SpringboardScreen(item) = -1) then
             files.delete(msg.GetIndex())
             screen.SetContent(files)

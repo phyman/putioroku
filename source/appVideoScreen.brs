@@ -50,6 +50,7 @@ Function DisplayVideo(item as object, subtitle, do_restart = false)
       videoclip.PlayStart = 0
     else
       videoclip.PlayStart = GetStartFrom(item)
+      print "DisplayVideo:: "videoclip.PlayStart
     end if
 
     video.SetCertificatesFile("common:/certs/ca-bundle.crt")
@@ -73,6 +74,8 @@ Function DisplayVideo(item as object, subtitle, do_restart = false)
               currentpos = msg.GetIndex()
               m.start_from = currentpos
               m.current_id = item["ID"].toint()
+              print "=== DisplayVideo::Current Id: "m.current_id
+
               if (currentpos <> 0)
                 request = MakeRequest()
                 url = "https://api.put.io/v2/files/"+item["ID"]+"/start-from/set?oauth_token="+m.token

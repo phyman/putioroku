@@ -6,7 +6,7 @@ REM |      Displays the interactive Link Screen UI to allow users to pair
 REM |       their account with the device - this is normally only done once
 REM *-------------------------------------------------------------------*/
 
-sub ShowLinkScreen(facade) as Integer
+Function ShowLinkScreen(facade) as Integer
   dt = CreateObject("roDateTime")
 
   ' create a roCodeRegistrationScreen and assign it a roMessagePort
@@ -98,7 +98,7 @@ sub ShowLinkScreen(facade) as Integer
     end if
   end while
   screen.Close()
-end sub
+end Function
 
 REM /*------------------------------------------------- GetLinkingCode -----
 REM |  Function GetLinkingCode
