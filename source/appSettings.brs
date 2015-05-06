@@ -14,9 +14,11 @@ function Settings() as Integer
   m.screen.SetMessagePort(port)
 
   ' Screen button "enums"
-  m.btn             = CreateObject("roAssociativeArray")
-  m.btn.SUBTITLES   = 0
-  m.btn.UNLINK      = 1
+  m.btn               = CreateObject("roAssociativeArray")
+  m.btn.SUBTITLES     = 0
+  m.btn.DELETE        = 1
+  m.btn.UNLINK        = 2
+  
 
   ' Screen button data
   m.choicesArr = CreateObject("roArray", m.btn.count(), true)
@@ -31,6 +33,18 @@ function Settings() as Integer
       Title:            s_title,
       HDSmallIconUrl:   "pkg:/images/subtitles.png",
       btnOnClickEvent:  toggle_subtitles,
+  }
+
+  if (m.delete_allowed = "true")
+    d_title = "Disable file deletion"
+  else
+    d_title = "Enable file deletion"
+  end if
+
+  m.choicesArr[m.btn.DELETE] = {
+      Title:            d_title,
+      HDSmallIconUrl:   "pkg:/images/unlink.png",
+      btnOnClickEvent:  toggle_deletion,
   }
 
   m.choicesArr[m.btn.UNLINK] = {
@@ -61,20 +75,6 @@ function Settings() as Integer
   end while
 end function
 
-REM /*------------------------------------------------- unlink_device -----
-REM |  Function unlink_device
-REM |
-REM |  Purpose:
-REM |      Unlinks the device from the account & exits the app
-REM *-------------------------------------------------------------------*/
-
-Function unlink_device(index as Integer)
-  print "unlinked device"
-  RegDelete("token")
-  RegDelete("subtitle_on")
-  End ' close the app & return to the Roku's Home panel
-end Function
-
 REM /*------------------------------------------------- toggle_subtitles -----
 REM |  Function toggle_subtitles
 REM |
@@ -98,5 +98,49 @@ Sub toggle_subtitles(index as Integer)
   m.screen.SetContent(m.choicesArr)
   m.screen.SetFocusedListItem(index)
   m.screen.Show()
+  
+  RegWrite("subtitle_on", m.subtitle_on)
 end Sub
+
+REM /*------------------------------------------------- toggle_deletion -----
+REM |  Function toggle_deletion
+REM |
+REM |  Purpose:
+REM |      Toggles the user's permission to delete content
+REM *-------------------------------------------------------------------*/
+
+Sub toggle_deletion(index as Integer)
+  m = GetGlobalAA()
+  'print "~~~~ toggle_deletion::m.delete_allowed is " m.delete_allowed
+  if (m.delete_allowed = "true")
+    m.delete_allowed   = "false"
+    m.choicesArr[index].Title = "Enable file deletions"
+    'print "delete_allowed is FALSE"
+  else
+    m.delete_allowed   = "true"
+    m.choicesArr[index].Title = "Disable file deletions"
+    'print "delete_allowed is TRUE"
+  end if
+
+  m.screen.SetContent(m.choicesArr)
+  m.screen.SetFocusedListItem(index)
+  m.screen.Show()
+  
+  RegWrite("delete_allowed", m.delete_allowed, "Permissions")
+end Sub
+
+REM /*------------------------------------------------- unlink_device -----
+REM |  Function unlink_device
+REM |
+REM |  Purpose:
+REM |      Unlinks the device from the account & exits the app
+REM *-------------------------------------------------------------------*/
+
+Function unlink_device(index as Integer)
+  'print "unlinked device"
+  RegDelete("token")
+  RegDelete("subtitle_on")
+  ExitUserInterface()
+end Function
+
 

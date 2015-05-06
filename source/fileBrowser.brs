@@ -48,7 +48,8 @@ function FileBrowser(url as string) as Integer
       if (msg.isRemoteKeyPressed()) then
 
         ' INFO KEY (*) pressed
-        if (msg.GetIndex() = 10) then
+        if (msg.GetIndex() = 10 and m.delete_allowed <> "false") then
+          print "=== Info key press ==="
           content_type = files[focusedItem].ContentType
 
           r = CreateObject("roRegex", "/", "")
@@ -96,8 +97,8 @@ function FileBrowser(url as string) as Integer
               screen.SetContent(files)
             end if
           end if
-        end if
-      end if
+        end if ' INFO KEY (*) pressed
+      end if 'isRemoteKeyPressed
 
       ' SELECT key pressed
       if (msg.isListItemSelected()) then

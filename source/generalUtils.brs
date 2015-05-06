@@ -76,3 +76,14 @@ function RegDelete(key, section=invalid)
     sec.Delete(key)
     sec.Flush()
 end function
+
+REM /*------------------------------------------------- ExitUserInterface -----
+REM |  Function ExitUserInterface
+REM |
+REM |  Purpose:
+REM |      Closes the app & returns user to the dashboard
+REM *-------------------------------------------------------------------*/
+
+Sub ExitUserInterface()
+    End
+End Sub

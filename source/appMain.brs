@@ -18,9 +18,31 @@ function Main()
     m.token = token
   end if
   m.subtitle_on = RegRead("subtitle_on")
-  ' print "----==== Main subtitle setting is " m.subtitle_on
+  initPermissions()
   initLandingScreen(facade)
 end function
+
+REM /*------------------------------------------------- initPermissions -----
+REM |  Function initPermissions
+REM |
+REM |  Purpose:
+REM |      Reads and sets the user's permissions
+REM *-------------------------------------------------------------------*/
+
+Function initPermissions()
+  print " -- initPermissions --"
+  
+  ' Users' content delete permission
+  rkey    = RegRead("allow_delete", "Permissions")
+  default = "false"                                            
+  if (rkey = invalid) then
+    rkey = default                                           
+    RegWrite("allow_delete", rkey, "Permissions")
+  end if                                                                 
+  
+  m.allow_delete = rkey                                                   
+    
+End Function
 
 
 ' Function Init_State_Vars() As Object

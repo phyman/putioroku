@@ -112,9 +112,11 @@ function SpringboardScreen(item as object) As Integer
         end if
     end if
 
-    ' All details screens get a delete button
-    screen.AddButton(BTN_DELETE, "Delete")
-
+    ' If allowed, all details screens get a delete button
+    if (m.delete_allowed <> "false")
+      screen.AddButton(BTN_DELETE, "Delete")
+    end if
+    
     screen.AllowUpdates(false)
     if item <> invalid and type(item) = "roAssociativeArray"
         screen.SetContent(item)
