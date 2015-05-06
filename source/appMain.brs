@@ -33,14 +33,14 @@ Function initPermissions()
   print " -- initPermissions --"
   
   ' Users' content delete permission
-  rkey    = RegRead("allow_delete", "Permissions")
+  rkey    = RegRead("delete_allowed", "Permissions")
   default = "false"                                            
   if (rkey = invalid) then
     rkey = default                                           
-    RegWrite("allow_delete", rkey, "Permissions")
+    RegWrite("delete_allowed", rkey, "Permissions")
   end if                                                                 
   
-  m.allow_delete = rkey                                                   
+  m.delete_allowed = rkey                                                   
     
 End Function
 
