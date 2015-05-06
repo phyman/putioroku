@@ -103,6 +103,7 @@ function InitTheme()
     buttonText      = "#C0C0C0"
     buttonHighlight = "#ffffff"
     backgroundColor = "#4D4D4D"
+    skyBlue         = "#66CCFF"
 
     ' TODO: Replace #colorValues with symbolic names
 
@@ -116,31 +117,31 @@ function InitTheme()
         OverhangOffsetSD_Y: "72"
         OverhangOffsetHD_X: "230"
         OverhangOffsetHD_Y: "72"
-        BreadcrumbTextLeft: "#FFED6D"
-        BreadcrumbTextRight: "#FFED6D"
-        BreadcrumbDelimiter: "#FFED6D"
+        BreadcrumbTextLeft: skyBlue
+        BreadcrumbTextRight: skyBlue
+        BreadcrumbDelimiter: skyBlue
         ThemeType: "generic-dark"
-        ListItemText: secondaryText
-        ListItemHighlightText: primaryText
-        ListScreenDescriptionText: secondaryText
+        ListItemText: skyBlue
+        ListItemHighlightText: skyBlue
+        ListScreenDescriptionText: skyBlue
         ListItemHighlightHD: "pkg:/images/selected-bg.png"
         ListItemHighlightSD: "pkg:/images/selected-bg.png"
-        SpringboardTitleText: "#FFED6D"
-        ButtonNormalColor: "#FFED6D"
-        ButtonHighlightColor: "#FFED6D"
-        ButtonMenuHighlightText: "#FFED6D"
-        ButtonMenuNormalOverlayText: "#FFED6D"
-        ButtonMenuNormalText: "#FFED6D"
-        ParagraphBodyText: "#FFED6D"
-        ParagraphHeaderText: "#FFED6D"
+        SpringboardTitleText: skyBlue
+        ButtonNormalColor: skyBlue
+        ButtonHighlightColor: skyBlue
+        ButtonMenuHighlightText: skyBlue
+        ButtonMenuNormalOverlayText: skyBlue
+        ButtonMenuNormalText: skyBlue
+        ParagraphBodyText: skyBlue
+        ParagraphHeaderText: skyBlue
         RegistrationFocalColor: "FFFFFF"
-        DialogBodyText: "#FFED6D"
-        DialogTitleText: "#FFED6D"
-        RegistrationCodeColor: "#FFED6D"
-        RegistrationFocalColor: "#FFED6D"
-        RegistrationFocalRectColor: "#FFED6D"
-        RegistrationFocalRectHD: "#FFED6D"
-        RegistrationFocalRectSD: "#FFED6D"
+        DialogBodyText: skyBlue
+        DialogTitleText: skyBlue
+        RegistrationCodeColor: skyBlue
+        RegistrationFocalColor: skyBlue
+        RegistrationFocalRectColor: skyBlue
+        RegistrationFocalRectHD: skyBlue
+        RegistrationFocalRectSD: skyBlue
     }
     app.SetTheme( theme )
 end function

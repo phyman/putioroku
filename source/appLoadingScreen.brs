@@ -8,7 +8,7 @@ REM |  Returns:
 REM |      roImageCanvas object to display
 REM *-------------------------------------------------------------------*/
 
-Sub Loading() as Object
+Function Loading() as Object
   canvasItems = [
         {
             url:"pkg:/images/app-icon.png"
@@ -16,7 +16,7 @@ Sub Loading() as Object
         },
         {
             Text:"Thinking..."
-            TextAttrs:{Color:"#FFED6D", Font:"Medium",
+            TextAttrs:{Color:"#66CCFF", Font:"Medium",
             HAlign:"HCenter", VAlign:"VCenter",
             Direction:"LeftToRight"}
             TargetRect:{x:390,y:467,w:500,h:60}
@@ -32,4 +32,4 @@ Sub Loading() as Object
   canvas.SetLayer(1, canvasItems)
   canvas.Show()
   return canvas
-end Sub
+end Function
