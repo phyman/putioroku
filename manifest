@@ -11,4 +11,5 @@ screensaver_title=hw screensaver
 screensaver_private=1
 splash_screen_sd=pkg:/images/splash.png
 splash_screen_hd=pkg:/images/splash.png
+splash_color=#ffffff
 splash_min_time=1

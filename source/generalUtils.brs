@@ -17,10 +17,13 @@ REM |      The key's value if found; invalid otherwise.
 REM *-------------------------------------------------------------------*/
 
 function RegRead(key, section=invalid)
-    print "RegRead"
     if section = invalid then section = "Default"
     sec = CreateObject("roRegistrySection", section)
-    if sec.Exists(key) then return sec.Read(key)
+    if sec.Exists(key) then 
+      val = sec.Read(key)
+      print "RegREAD key: " + key + " val: " + val + " section: " + section
+      return val
+    end if
     return invalid
 end function
 
@@ -44,11 +47,11 @@ REM |
 REM *-------------------------------------------------------------------*/
 
 function RegWrite(key, val, section=invalid)
-    print "RegWrite"
     if section = invalid then section = "Default"
     sec = CreateObject("roRegistrySection", section)
     sec.Write(key, val)
     sec.Flush() 'commit it'
+    print "RegWRITE key: " + key + " val: " + val + " section: " + section
 end function
 
 REM /*------------------------------------------------- RegDelete -----
@@ -69,12 +72,12 @@ REM |
 REM *-------------------------------------------------------------------*/
 
 function RegDelete(key, section=invalid)
-    print "RegDelete"
     ' TODO check and see if this can't just return if section is invalid coming in
     if section = invalid then section = "Default"
     sec = CreateObject("roRegistrySection", section)
     sec.Delete(key)
     sec.Flush()
+    print "RegDELETE key: " + key + " val: " + val + " section: " + section
 end function
 
 REM /*------------------------------------------------- ExitUserInterface -----

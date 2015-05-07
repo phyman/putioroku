@@ -40,7 +40,7 @@ Function DisplayVideo(item as object, subtitle, do_restart = false)
     videoclip.StreamQualities = qualities
     videoclip.StreamFormat    = StreamFormat
     videoclip.Title           = title
-    if (m.subtitle_on = "on")
+    if (m.subtitle_on = "true")
       if subtitle <> invalid
         videoclip.SubtitleUrl = "https://api.put.io/v2/files/"+item["ID"]+"/subtitles/"+subtitle+"?oauth_token="+m.token
       end if

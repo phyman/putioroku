@@ -163,7 +163,7 @@ function ValidateLinkingCode() as Integer
         if (json.DoesExist("oauth_token")) then
           token = json["oauth_token"]
           RegWrite("token", token)
-          RegWrite("subtitle_on", "on")
+          RegWrite("subtitle_on", "true")
           m.token = token
           return 1
         end if
