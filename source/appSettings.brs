@@ -141,10 +141,33 @@ REM *-------------------------------------------------------------------*/
 
 Function unlink_device(index as Integer)
   'print "unlinked device"
-  RegDelete("token")
-  RegDelete("subtitle_on")
-  ExitUserInterface()
+  newline = Chr(10) ' ASCII newline (LF) character
+  dlgData = {
+    Title:        "Please confirm Unlink operation",
+    Text:         "This will unlink the device & close this Application." + newline + "Do you really want to do this?",
+    BtnYesLabel:  "Confirm",
+    BtnYesAction: m_confirmed,
+    BtnNoLabel:   "Cancel"
+    BtnNoAction:  m_canceled,
+  }
+  if (ShowConfirmDialog(dlgData))
+    ' TODO: Add a RegKeyManager for easier reg cleaning
+    RegDelete("token")
+    RegDelete("subtitle_on")
+    RegDelete("delete_allowed", "Permissions")
+    ExitUserInterface()
+  end if
 end Function
+
+REM /*------------------------------------------------- m_confirmed --
+Function m_confirmed()
+  return true
+End Function
+
+REM /*------------------------------------------------- m_canceled --
+Function m_canceled()
+  return false
+End Function
 
 REM /*------------------------------------------------- SaveChangesToRegistry --
 REM |  Function SaveChangesToRegistry
@@ -159,8 +182,42 @@ Sub SaveChangesToRegistry()
   RegWrite("delete_allowed",  m.delete_allowed, "Permissions")
 End Sub
 
+REM /*------------------------------------------------- RefreshScreen --
 Sub RefreshScreen(index=invalid)
   m.screen.SetContent(m.buttons)
   if (index <> invalid) then m.screen.SetFocusedListItem(index)
   m.screen.Show()
 End Sub
+
+REM /*------------------------------------------------- ShowConfirmDialog --
+Function ShowConfirmDialog(data As Object) As Boolean
+    port    = CreateObject("roMessagePort")
+    dialog  = CreateObject("roMessageDialog")
+
+    ' button enums
+    btn_NO  = 1
+    btn_YES = 2
+
+    dialog.SetMessagePort(port)
+    dialog.SetTitle(data.Title)
+    dialog.SetText(data.Text)
+
+    ' make the "no" the first button, so it's the screen's default focus item
+    dialog.AddButton(btn_NO, data.BtnNoLabel)
+    dialog.AddButton(btn_YES, data.BtnYesLabel)
+    dialog.EnableBackButton(true)
+    dialog.Show()
+
+    While True
+        dlgMsg = wait(0, dialog.GetMessagePort())
+        If type(dlgMsg) = "roMessageDialogEvent"
+            if dlgMsg.isButtonPressed()
+                btn = dlgMsg.GetIndex()
+                if (btn = btn_NO) then return data.BtnNoAction()
+                if (btn = btn_YES) then return data.BtnYesAction()
+            else if dlgMsg.isScreenClosed()
+                return false
+            end if
+        end If
+    end While
+End Function

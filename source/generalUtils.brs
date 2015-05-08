@@ -63,12 +63,6 @@ REM |
 REM |  Parameter(s):
 REM |      key (IN)
 REM |              The target registry key to delete
-REM |
-REM |      If the section is invalid, it creates it, then deletes the key
-REM |       BUT, there doesn’t seem to be any reason to do this...
-REM |       QED this should be changed to just return if the section is invalid
-REM |       to begin with...
-REM |
 REM *-------------------------------------------------------------------*/
 
 function RegDelete(key, section=invalid)
