@@ -5,10 +5,10 @@ REM |  Purpose:
 REM |      Presents the user with the various settings that may be toggled
 REM |
 REM |  Returns:
-REM |      1 if user unlinked their device, -1 on screen close
+REM |      -1 on screen close
 REM *-------------------------------------------------------------------*/
 
-function Settings() as Integer
+function Settings() As Integer
   m.screen  = CreateObject("roListScreen")
   port      = CreateObject("roMessagePort")
   m.buttons = InitScreenButtons()
@@ -46,7 +46,7 @@ REM |  Returns:
 REM |      btnArr - an array of populated buttons for the screen’s use
 REM *-------------------------------------------------------------------*/
 
-Function InitScreenButtons() as Object
+Function InitScreenButtons() As Object
   ' Screen button "enums"
   btn               = CreateObject("roAssociativeArray")
   btn.SUBTITLES     = 0
@@ -57,21 +57,25 @@ Function InitScreenButtons() as Object
   btnArr = CreateObject("roArray", btn.count(), true)
 
   btnArr[btn.SUBTITLES] = {
-      Title:            "~ERROR~",
+      Title:            "~UNDEF~",
       HDSmallIconUrl:   "pkg:/images/subtitles.png",
-      btnOnClickEvent:  toggle_subtitles,
-      label_seg:        "subtitles",
+      btnOnClickEvent:  Function(index)
+                          GetGlobalAA().subtitle_on = toggle_setting(m, index)
+                        End Function,
+      title_seg:        "subtitles",
       btnState:         m.subtitle_on,
-      SetLabel:         set_label,
+      SetTitle:         set_title,
   }
 
   btnArr[btn.DELETE] = {
-      Title:            "~ERROR~",
+      Title:            "~UNDEF~",
       HDSmallIconUrl:   "pkg:/images/unlink.png",
-      btnOnClickEvent:  toggle_deletion,
-      label_seg:        "file deletion",
+      btnOnClickEvent:  Function(index)
+                          GetGlobalAA().delete_allowed = toggle_setting(m, index)
+                        End Function,
+      title_seg:        "file deletion",
       btnState:         m.delete_allowed,
-      SetLabel:         set_label,
+      SetTitle:         set_title,
   }
 
   btnArr[btn.UNLINK] = {
@@ -80,56 +84,40 @@ Function InitScreenButtons() as Object
       btnOnClickEvent:  unlink_device,
   }
 
-  btnArr[btn.DELETE].SetLabel()
-  btnArr[btn.SUBTITLES].SetLabel()
+  btnArr[btn.DELETE].SetTitle()
+  btnArr[btn.SUBTITLES].SetTitle()
 
   return btnArr
 End Function
 
-Function set_label()
-  btnLbl = "~ERROR~"
-  if (m.btnState = "true" ) then btnLbl = "Disable " + m.label_seg
-  if (m.btnState = "false" ) then btnLbl = "Enable " + m.label_seg
-  if (btnLbl <> "~ERROR~")
-    ?  "set_label to: " btnLbl
+REM /*------------------------------------------------- set_title -----
+
+Function set_title()
+  btnLbl = "~UNDEF~"
+  if (m.btnState = "true" ) then btnLbl = "Disable " + m.title_seg
+  if (m.btnState = "false" ) then btnLbl = "Enable " + m.title_seg
+  if (btnLbl <> "~UNDEF~")
+    ' print "set_title to: " btnLbl
     m.Title = btnLbl
   end if
 End Function
 
-REM /*------------------------------------------------- toggle_subtitles -----
-REM |  Function toggle_subtitles
-REM |
-REM |  Purpose:
-REM |      Toggles the global subtitles setting and button label when selected
-REM *-------------------------------------------------------------------*/
-
-Sub toggle_subtitles(index as Integer)
-  GetGlobalAA().subtitle_on = toggleSetting(m, index)
-end Sub
-
-REM /*------------------------------------------------- toggle_deletion -----
-REM |  Function toggle_deletion
-REM |
-REM |  Purpose:
-REM |      Toggles the user's permission to delete content
-REM *-------------------------------------------------------------------*/
-
-Sub toggle_deletion(index as Integer)
-  GetGlobalAA().delete_allowed = toggleSetting(m, index)
-end Sub
-
-Function toggleSetting(m as Object, index as Integer) as String
-  'print "~~~~ toggleSetting::m.btnState is: " m.btnState
+REM /*------------------------------------------------- toggle_setting -----
+Function toggle_setting(m As Object, index As Integer) As String
+  ' TODO: add type checking and other toggles; e.g. boolean, on/off
   if (m.btnState = "true")
     m.btnState = "false"
-    'print "btnState is FALSE"
   else
     m.btnState = "true"
-    'print "btnState is TRUE"
   end if
-  m.SetLabel()
-  RefreshScreen(index)
+  update_button_title(m, index)
   return m.btnState
+End Function
+
+REM /*------------------------------------------------- update_button_title -----
+Function update_button_title(m As Object, index As Integer)
+  m.SetTitle()
+  RefreshScreen(index)
 End Function
 
 REM /*------------------------------------------------- unlink_device -----
@@ -139,16 +127,20 @@ REM |  Purpose:
 REM |      Unlinks the device from the account & exits the app
 REM *-------------------------------------------------------------------*/
 
-Function unlink_device(index as Integer)
+Function unlink_device(index As Integer)
   'print "unlinked device"
   newline = Chr(10) ' ASCII newline (LF) character
   dlgData = {
     Title:        "Please confirm Unlink operation",
     Text:         "This will unlink the device & close this Application." + newline + "Do you really want to do this?",
     BtnYesLabel:  "Confirm",
-    BtnYesAction: m_confirmed,
+    BtnYesAction: Function()
+                    return true
+                  End Function,
     BtnNoLabel:   "Cancel"
-    BtnNoAction:  m_canceled,
+    BtnNoAction:  Function()
+                    return false
+                  End Function,
   }
   if (ShowConfirmDialog(dlgData))
     ' TODO: Add a RegKeyManager for easier reg cleaning
@@ -158,36 +150,6 @@ Function unlink_device(index as Integer)
     ExitUserInterface()
   end if
 end Function
-
-REM /*------------------------------------------------- m_confirmed --
-Function m_confirmed()
-  return true
-End Function
-
-REM /*------------------------------------------------- m_canceled --
-Function m_canceled()
-  return false
-End Function
-
-REM /*------------------------------------------------- SaveChangesToRegistry --
-REM |  Function SaveChangesToRegistry
-REM |
-REM |  Purpose:
-REM |      Writes changes to persistant registry
-REM *-------------------------------------------------------------------*/
-
-Sub SaveChangesToRegistry()
-  'print "~~~~~~~~~~~~~~~~ SaveChangesToRegistry"
-  RegWrite("subtitle_on",     m.subtitle_on)
-  RegWrite("delete_allowed",  m.delete_allowed, "Permissions")
-End Sub
-
-REM /*------------------------------------------------- RefreshScreen --
-Sub RefreshScreen(index=invalid)
-  m.screen.SetContent(m.buttons)
-  if (index <> invalid) then m.screen.SetFocusedListItem(index)
-  m.screen.Show()
-End Sub
 
 REM /*------------------------------------------------- ShowConfirmDialog --
 Function ShowConfirmDialog(data As Object) As Boolean
@@ -221,3 +183,23 @@ Function ShowConfirmDialog(data As Object) As Boolean
         end If
     end While
 End Function
+
+REM /*------------------------------------------------- SaveChangesToRegistry --
+REM |  Function SaveChangesToRegistry
+REM |
+REM |  Purpose:
+REM |      Writes changes to persistant registry
+REM *-------------------------------------------------------------------*/
+
+Sub SaveChangesToRegistry()
+  'print "~~~~~~~~~~~~~~~~ SaveChangesToRegistry"
+  RegWrite("subtitle_on",     m.subtitle_on)
+  RegWrite("delete_allowed",  m.delete_allowed, "Permissions")
+End Sub
+
+REM /*------------------------------------------------- RefreshScreen --
+Sub RefreshScreen(index=invalid)
+  m.screen.SetContent(m.buttons)
+  if (index <> invalid) then m.screen.SetFocusedListItem(index)
+  m.screen.Show()
+End Sub
