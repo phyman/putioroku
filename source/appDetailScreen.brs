@@ -58,24 +58,25 @@ function SpringboardScreen(item as object) As Integer
       if (request.AsyncGetToString())
         msg = wait(0, port)
         if (type(msg) = "roUrlEvent") then
-          code = msg.GetResponseCode()
-          if (code = SUCCESS) then
+          
+          if (msg.GetResponseCode() = SUCCESS) then
             result = ParseJSON(msg.GetString())
-            if (result["mp4"]["status"] = "NOT_AVAILABLE") then
+            mp4_status = result["mp4"]["status"]
+            if ("NOT_AVAILABLE" = mp4_status) then
               screen.AddButton(BTN_TRY_TO_PLAY, "Try to play")
               screen.AddButton(BTN_CONVERT, "Convert to MP4")
-            else if (result["mp4"]["status"] = "COMPLETED") then
+            else if ("COMPLETED" = mp4_status) then
               screen.AddButton(BTN_PLAY, "Play")
-            else if (result["mp4"]["status"] = "CONVERTING")
+            else if ("CONVERTING" = mp4_status)
               screen.AddButton(BTN_TRY_TO_PLAY, "Try to play")
               percent_done = result["mp4"]["percent_done"]
               item.Description = "Converting to MP4...  "+percent_done.tostr()+"%"
               'TODO: On this screen the "Try to play" button is displayed, but should it be??
-            else if (result["mp4"]["status"] = "IN_QUEUE")
+            else if ("IN_QUEUE" = mp4_status)
               screen.AddButton(BTN_TRY_TO_PLAY, "Try to play")
               item.Description = "In queue, please wait..."
             end if
-          end if
+          end if ' roUrlEvent
         else if (event = invalid)
           request.AsyncCancel()
           screen.AddButton(BTN_TRY_TO_PLAY, "Try to play")
@@ -84,12 +85,17 @@ function SpringboardScreen(item as object) As Integer
       end if
     else ' This is a video
       if (item.DoesExist("nonVideo") = false) then
-        screen.AddButton(BTN_PLAY, "Play")
-        screen.AddButton(BTN_RESTART, "Restart")
+        ' Check if this video has been played already and set button labels
+        if (GetStartFrom(item) > 1) then
+          screen.AddButton(BTN_PLAY, "Resume")
+          screen.AddButton(BTN_RESTART, "Restart")
+        else
+          screen.AddButton(BTN_PLAY, "Play")
+        end if
       end if
     end if
 
-    if (item.DoesExist("NonVideo") = false) then
+    if (item.DoesExist("nonVideo") = false) then
         subtitles = invalid
         request   = MakeRequest()
         url       = "https://api.put.io/v2/files/"+item["ID"]+"/subtitles?oauth_token="+m.token
@@ -157,7 +163,7 @@ function SpringboardScreen(item as object) As Integer
               'Play the video
               DisplayVideo(item, subtitle)
             else
-              ? "Restart the video from the beginning"
+              ? "Restarting the video from the beginning"
               DisplayVideo(item, subtitle, true)
             end if
 
@@ -172,7 +178,7 @@ function SpringboardScreen(item as object) As Integer
               'geri ok tusuyla hicbir sey yapmadan geri donulurse invalid donuyor'
               subtitle_index = tmp
             end if
-          else if btnIndex = DELETE
+          else if btnIndex = BTN_DELETE
             res = DeleteItem(item)
             if (res = true) then
               return -1
