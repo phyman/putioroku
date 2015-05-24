@@ -1,12 +1,12 @@
 .PHONY: clean
 
-all: build/helloworld.zip
+all: out/helloworld.zip
 
-build: clean
-	mkdir -p build
+out: clean
+	mkdir -p out
 
-build/helloworld.zip: build
-	zip -r -9 build/helloworld.zip . -x .DS_Store \*.git\* \*build\*
+out/helloworld.zip: out
+	zip -r -9 out/helloworld.zip . -x .DS_Store \*.git\* \*out\*
 
 clean:
-	rm -rf build
+	rm -rf out
